@@ -1,5 +1,5 @@
 # from napa.querier.base_querier import Querier
-from napa.querier.base_querier import Querier
+from lib.querier.base_querier import Querier
 
 
 class NodeQuerier(Querier):

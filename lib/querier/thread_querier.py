@@ -3,8 +3,8 @@ import threading
 import time
 import numpy as np
 import pandas as pd
-from napa.querier.deployment_querier import DeploymentQuerier
-from napa.utils.logger import set_logger
+from lib.querier.deployment_querier import DeploymentQuerier
+from lib.utils.logger import set_logger
 
 logger = set_logger(__name__)
 
@@ -36,6 +36,7 @@ class ThreadQuerier:
                 current_replicas = myquery.get_deployment_replicas('monitoring', 'benchy')
                 flag = check_conf(current_replicas, cpu_limit, mem_limit)
                 if not flag:
+                    print("Flag == False")
                     raise Exception
                 # LOAD METRIC
                 result = myquery.make_query('locust_requests_num_requests{container="locust-exporter"}')
@@ -62,8 +63,8 @@ class ThreadQuerier:
                 logger.error(e)
                 logger.info("Retrying in 15 seconds...")
             finally:
-                time.sleep(15)
-                if (time.time() - start_time) >= 30:
+                time.sleep(30)
+                if (time.time() - start_time) >= 3600:
                     # An hour has passed
                     # Creating CSV
                     print("Creating CSV, an hour has passed")

@@ -1,5 +1,5 @@
 import os
-from napa.querier.thread_querier import ThreadQuerier
+from lib.querier.thread_querier import ThreadQuerier
 
 os.environ["METRIC_ENDPOINT"] = "http://localhost:9090"
 os.environ["CONF"] = "CONF_0"

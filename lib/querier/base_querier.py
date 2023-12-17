@@ -2,8 +2,8 @@ import os
 
 import requests
 
-from napa.utils.logger import set_logger
-from napa.utils.time import TimeUtils
+from lib.utils.logger import set_logger
+from lib.utils.time import TimeUtils
 
 logger = set_logger(__name__)
 

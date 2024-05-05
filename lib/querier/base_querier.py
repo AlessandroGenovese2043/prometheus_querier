@@ -11,7 +11,7 @@ logger = set_logger(__name__)
 class Querier(object):
     def __init__(self):
         self.endpoint = os.environ.get("METRIC_ENDPOINT",
-                                       "http://localhost:9090")
+                                       "http://prometheus-k8s:9090")
 
     def make_query_range(self, query, minute_ago=60, step='1m'):
         try:

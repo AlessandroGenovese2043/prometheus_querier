@@ -1,0 +1,13 @@
+version: '3.6'
+
+services:
+
+  querier-service:
+    container_name: querier-service
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    image: querier_service_image:base
+    expose:
+      - "50055"
+    restart: always

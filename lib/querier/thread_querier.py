@@ -5,7 +5,11 @@ import numpy as np
 import pandas as pd
 from lib.querier.deployment_querier import DeploymentQuerier
 from lib.utils.logger import set_logger
+from prometheus_client import Counter, generate_latest, REGISTRY, Gauge, Histogram
+from flask import Flask, Response
 
+# definition of the metrics to be exposed
+CONF_PARAMETER = Gauge('Benchy_configuration', 'Configuration of benchy')
 logger = set_logger(__name__)
 
 
@@ -39,7 +43,8 @@ class ThreadQuerier:
                     print("Flag == False")
                     raise Exception
                 # LOAD METRIC
-                result = myquery.make_query('locust_requests_num_requests{container="locust-exporter"}')
+                # result = myquery.make_query('locust_requests_num_requests{container="locust-exporter"}')
+                result = myquery.make_query('sum(benchy_request)')
                 load = result[0]['value'][1]
                 # CPU_USAGE METRIC
                 cpu_usage = myquery.get_deployment_cpu_usage('monitoring', 'benchy')
@@ -50,7 +55,7 @@ class ThreadQuerier:
                 # LATENCY
                 # error in LOCUST EXPORTER
                 # locust_requests_current_response_time_percentile_95 gives 0 as result
-                result = myquery.make_query("locust_requests_avg_response_time{container='locust-exporter'}")
+                result = myquery.make_query("sum(benchy_avg_query_durations)")
                 latency = result[0]['value'][1]
                 latency = round(float(latency), 2)
                 # INSERT INTO DATAFRAME
@@ -63,7 +68,7 @@ class ThreadQuerier:
                 logger.error(e)
                 logger.info("Retrying in 15 seconds...")
             finally:
-                time.sleep(30)
+                time.sleep(3)
                 if (time.time() - start_time) >= 3600:
                     # An hour has passed
                     # Creating CSV
@@ -80,8 +85,9 @@ def check_conf(current_replicas, cpu_limit, mem_limit):
         case 1:
             # MEM_LIMIT conversion 256 Mebibit to bit
             if cpu_limit == 0.1 and mem_limit == 268435456.0:
-                print('CONF 0')
-                os.environ["CONF"] = "CONF_0"
+                print('CONF 1')
+                os.environ["CONF"] = "CONF_1"
+                CONF_PARAMETER.set(1)
                 return True
             else:
                 print('Error! This configuration of benchy does not exit')
@@ -91,6 +97,7 @@ def check_conf(current_replicas, cpu_limit, mem_limit):
             if cpu_limit == 2 * 0.2 and mem_limit == 2 * 536870912.0:
                 print('CONF 2')
                 os.environ["CONF"] = "CONF_2"
+                CONF_PARAMETER.set(2)
                 return True
             else:
                 print('Error! This configuration of benchy does not exit')
@@ -100,6 +107,7 @@ def check_conf(current_replicas, cpu_limit, mem_limit):
             if cpu_limit == 3 * 0.3 and mem_limit == 3 * 268435456.0:
                 print('CONF 3')
                 os.environ["CONF"] = "CONF_3"
+                CONF_PARAMETER.set(3)
                 return True
             else:
                 print('Error! This configuration of benchy does not exit')
@@ -107,3 +115,18 @@ def check_conf(current_replicas, cpu_limit, mem_limit):
         case _:
             print('Error! This configuration of benchy does not exit')
             return False
+
+
+def create_app():
+    app = Flask(__name__)
+
+    @app.route('/metrics')
+    def metrics():
+        # Export all the metrics as text for Prometheus
+        return Response(generate_latest(REGISTRY), mimetype='text/plain')
+
+    return app
+
+
+# create Flask application
+app = create_app()
